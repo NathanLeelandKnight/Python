@@ -9,32 +9,72 @@ gscale70 = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^
 #10 levels of gray
 gscale10 = "@%#*+=-:. "
 
-if len(sys.argv) != 4:
-	print("Use program as: python ASCIIArt.py \'image.jpg\' \'#chars to use (10 or 70)\' \'#columns\'")
+def getAverageL(image):
+	im = np.array(image)
+	w,h = im.shape
+	return np.average(im.reshape(w*h))
+
+if len(sys.argv) != 6:
+	print("Use program as: python ASCIIArt.py \'image.jpg\' \'#chars to use (10 or 70)\' \'#columns\' \'vertical scale\' \'outfile location\'")
 	exit()
 
-scaleNum = int(sys.argv[2])
-cols = int(sys.argv[3])
+gScaleNum = int(sys.argv[2])
+cols      = int(sys.argv[3])
+vertScale = float(sys.argv[4])
+outFile   = sys.argv[5]
 
-if 10 != scaleNum != 70:
+if 10 != gScaleNum != 70:
 	print("#chars to use needs to be 10 or 70")
 	exit()
 
-if not (0 < cols < 251):
-	print("#columns must be between [1, 250]")
+if not (0 < cols < 351):
+	print("#columns must be between [1, 350]")
 	exit()
+
+if not (0 < vertScale < 11):
+	print("vertical scale must be between [1, 10]")
 
 image = Image.open(sys.argv[1]).convert("L")
 
 W = image.size[0]
 H = image.size[1]
+w = W / cols
+h = w / vertScale
 
-scale = W / H
-tileW = W / cols
-tileH = tileW / scale
+rows  = int(H / h)
 
-def getAverageL(image):
-	im = np.array(image)
-	w,h = im.shape
-	return np.average(im.reshape(w*h))
+
+aimg = []
+
+for i in range(rows):
+	y1 = int(i*h)
+	y2 = int((i+1)*h)
+
+	if i == (rows - 1):
+		y2 = H
+
+	aimg.append("")
+
+	for j in range(cols):
+		x1 = int(j*w)
+		x2 = int((j+1)*w)
+
+		if j == (cols - 1):
+			x2 = W
+
+		img = image.crop((x1, y1, x2, y2))
+		avg = int(getAverageL(img))
+
+		if gScaleNum == 10:
+			gval = gscale10[int((avg*9)/255)]
+		else:
+			gval = gscale70[int((avg*69)/255)]
+
+		aimg[i] += gval
+
+f = open(outFile, 'w')
+
+for row in aimg:
+	f.write(row + '\n')
+f.close()
 
